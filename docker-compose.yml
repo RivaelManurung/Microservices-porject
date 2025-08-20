@@ -1,0 +1,82 @@
+version: '3.9'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ms_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  mysql-user:
+    image: mysql:8.0
+    container_name: ms_mysql_user
+    ports: [ "3306:3306" ]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: user_db
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+
+  mysql-product:
+    image: mysql:8.0
+    container_name: ms_mysql_product
+    ports: [ "3307:3306" ]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: product_db
+    volumes:
+      - mysql_product_data:/var/lib/mysql
+
+  mysql-order:
+    image: mysql:8.0
+    container_name: ms_mysql_order
+    ports: [ "3308:3306" ]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: order_db
+    volumes:
+      - mysql_order_data:/var/lib/mysql
+
+  user-service:
+    build: ./services/user-service
+    environment:
+      - PORT=3001
+      - RABBITMQ_URL=amqp://rabbitmq
+      - SERVICE_NAME=user-service
+      - DB_HOST=mysql-user
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=user_db
+    depends_on: [rabbitmq, mysql-user]
+    ports: [ "3001:3001" ]
+
+  product-service:
+    build: ./services/product-service
+    environment:
+      - PORT=3002
+      - RABBITMQ_URL=amqp://rabbitmq
+      - SERVICE_NAME=product-service
+      - DB_HOST=mysql-product
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=product_db
+    depends_on: [rabbitmq, mysql-product]
+    ports: [ "3002:3002" ]
+
+  order-service:
+    build: ./services/order-service
+    environment:
+      - PORT=3003
+      - RABBITMQ_URL=amqp://rabbitmq
+      - SERVICE_NAME=order-service
+      - DB_HOST=mysql-order
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=order_db
+    depends_on: [rabbitmq, mysql-order]
+    ports: [ "3003:3003" ]
+
+volumes:
+  mysql_user_data:
+  mysql_product_data:
+  mysql_order_data:
