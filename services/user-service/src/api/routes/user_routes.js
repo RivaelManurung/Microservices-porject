@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
+// Di sini kita mengekspor sebuah FUNGSI, bukan objek
 module.exports = (userController) => {
-    // Rute yang sudah ada
     router.get('/', userController.getAllUsers);
-
-    // Rute baru untuk registrasi dan login
     router.post('/register', userController.register);
     router.post('/login', userController.login);
     
+    // Fungsi ini MENGEMBALIKAN router yang sudah dikonfigurasi
     return router;
 };
