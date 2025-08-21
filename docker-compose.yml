@@ -1,54 +1,56 @@
 version: '3.9'
+
 services:
+  # Message Broker
   rabbitmq:
     image: rabbitmq:3-management
     container_name: ms_rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  mysql-user:
+  # Satu Database untuk semua service
+  mysql:
     image: mysql:8.0
-    container_name: ms_mysql_user
-    ports: [ "3306:3306" ]
+    container_name: ms_mysql
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: user_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     volumes:
-      - mysql_user_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  mysql-product:
-    image: mysql:8.0
-    container_name: ms_mysql_product
-    ports: [ "3307:3306" ]
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: product_db
-    volumes:
-      - mysql_product_data:/var/lib/mysql
-
-  mysql-order:
-    image: mysql:8.0
-    container_name: ms_mysql_order
-    ports: [ "3308:3306" ]
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: order_db
-    volumes:
-      - mysql_order_data:/var/lib/mysql
-
+  # Microservices
   user-service:
     build: ./services/user-service
     environment:
       - PORT=3001
       - RABBITMQ_URL=amqp://rabbitmq
       - SERVICE_NAME=user-service
-      - DB_HOST=mysql-user
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_HOST=mysql
+      - DB_USER=user
+      - DB_PASSWORD=password
       - DB_NAME=user_db
-    depends_on: [rabbitmq, mysql-user]
-    ports: [ "3001:3001" ]
+      - JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30 # Ganti dengan secret acak Anda
+    ports: ["3001:3001"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy 
+      mysql:
+        condition: service_healthy 
 
   product-service:
     build: ./services/product-service
@@ -56,12 +58,16 @@ services:
       - PORT=3002
       - RABBITMQ_URL=amqp://rabbitmq
       - SERVICE_NAME=product-service
-      - DB_HOST=mysql-product
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_HOST=mysql
+      - DB_USER=user
+      - DB_PASSWORD=password
       - DB_NAME=product_db
-    depends_on: [rabbitmq, mysql-product]
-    ports: [ "3002:3002" ]
+    ports: ["3002:3002"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
 
   order-service:
     build: ./services/order-service
@@ -69,14 +75,16 @@ services:
       - PORT=3003
       - RABBITMQ_URL=amqp://rabbitmq
       - SERVICE_NAME=order-service
-      - DB_HOST=mysql-order
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
+      - DB_HOST=mysql
+      - DB_USER=user
+      - DB_PASSWORD=password
       - DB_NAME=order_db
-    depends_on: [rabbitmq, mysql-order]
-    ports: [ "3003:3003" ]
+    ports: ["3003:3003"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
 
 volumes:
-  mysql_user_data:
-  mysql_product_data:
-  mysql_order_data:
+  mysql_data:
