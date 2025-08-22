@@ -23,6 +23,5 @@ module.exports = (sequelize) => {
         }
     }, { timestamps: true });
 
-    // PENTING: Fungsi ini harus mengembalikan model yang sudah didefinisikan
     return User; 
 };

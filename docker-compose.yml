@@ -35,17 +35,11 @@ services:
 
   # Microservices
   user-service:
-    build: ./services/user-service
-    environment:
+    build:
+      context: ./services/user-service/
+      dockerfile: Dockerfile
+    environment:  # ✅ BENAR: Di bawah nama service
       - PORT=3001
-      - RABBITMQ_URL=amqp://rabbitmq
-      - SERVICE_NAME=user-service
-      - DB_HOST=mysql
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=user_db
-      - JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30 # Ganti dengan secret acak Anda
-    ports: ["3001:3001"]
     depends_on:
       rabbitmq:
         condition: service_healthy 
