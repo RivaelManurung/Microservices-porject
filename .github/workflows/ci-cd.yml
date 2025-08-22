@@ -1,0 +1,52 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # Trigger saat ada push ke branch main
+  pull_request:
+    branches: [ "main" ] # Trigger saat ada pull request ke branch main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Ambil kode dari repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3. Install dependencies untuk user-service
+      - name: Install user-service deps
+        run: npm install
+        working-directory: ./services/user-service
+
+      # 4. Jalankan testing user-service
+      - name: Run user-service tests
+        run: npm test
+        working-directory: ./services/user-service
+
+      # 5. Install dependencies untuk product-service
+      - name: Install product-service deps
+        run: npm install
+        working-directory: ./services/product-service
+
+      # 6. Jalankan testing product-service
+      - name: Run product-service tests
+        run: npm test
+        working-directory: ./services/product-service
+
+      # 7. Install dependencies untuk order-service
+      - name: Install order-service deps
+        run: npm install
+        working-directory: ./services/order-service
+        
+      # 8. Jalankan testing order-service
+      - name: Run order-service tests
+        run: npm test
+        working-directory: ./services/order-service

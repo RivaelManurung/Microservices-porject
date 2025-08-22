@@ -7,7 +7,7 @@ class UserController {
   }
   register = async (req, res) => {
     try {
-      const user = await this.userService.register(req.body);
+      const user = await this.authService.register(req.body);
       const token = this.authService.createToken(user);
       res.status(201).json({ user, token });
     } catch (error) {
@@ -17,11 +17,11 @@ class UserController {
 
   login = async (req, res) => {
     try {
-      const user = await this.userService.login(req.body);
+      const user = await this.authService.login(req.body);
       const token = this.authService.createToken(user);
       res.status(200).json({ message: "Login successful", user, token });
     } catch (error) {
-      res.status(401).json({ error: error.message }); 
+      res.status(401).json({ error: error.message });
     }
   };
 

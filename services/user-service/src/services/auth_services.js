@@ -1,40 +1,34 @@
-const { use } = require("react");
-
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const config = require("../config/sesion_jwt");
 class AuthService {
   constructor(userModel) {
     this.User = userModel;
   }
 
   async register(userData) {
-    const { name, email } = userData;
+    const { name, email, password } = userData;
 
     const existingUser = await this.User.findOne({ where: { email } });
     if (existingUser) {
-      throw new Error("Email already use");
+      throw new Error("Email already in use");
     }
 
-    const existingNameUser = await this.User.findOne({ where: { name } });
-    if (existingNameUser) {
-      throw new Error("Name already use");
-    }
-
-    //password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await this.User.create({
       ...userData,
       password: hashedPassword,
-    });
+    }); 
 
     return newUser.toJSON();
   }
 
   async login(credentials) {
     const { email, password } = credentials;
-    const user = await this.User.findOne({ where: { name, email } });
+    const user = await this.User.findOne({ where: { email } });
     if (!user) {
-      throw new Error("User not found / Invalid credentials");
+      throw new Error("User not found or invalid credentials");
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -46,9 +40,11 @@ class AuthService {
   }
 
   createToken(user) {
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user.id }, config.jwt.secret, {
       expiresIn: "1h",
     });
     return token;
   }
 }
+
+module.exports = AuthService;

@@ -4,12 +4,13 @@ const express = require("express");
 const morgan = require("morgan");
 const { Sequelize } = require("sequelize");
 
-// BAGIAN YANG HILANG (1): Impor semua komponen
+// Impor semua komponen yang diperlukan
 const rabbit = require("./src/config/rabbitmq");
-const createUserModel = require("./src/models/user_models"); // <-- Ini hilang
+const createUserModel = require("./src/models/user_models");
 const UserService = require("./src/services/user_services");
+const AuthService = require("./src/services/auth_services");
 const UserController = require("./src/api/controllers/user_controllers");
-const createUserRoutes = require("./src/api/routes/user_routes"); // <-- Ini hilang
+const createUserRoutes = require("./src/api/routes/user_routes");
 
 const {
   PORT = 3001,
@@ -33,19 +34,21 @@ const {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
 
-    // BAGIAN YANG HILANG (2): Inisialisasi Model, Service, dan Controller
+    // 2. Inisialisasi Model, Service, dan Controller
     const User = createUserModel(sequelize);
     await sequelize.sync({ alter: true });
 
+    // Inisialisasi Service dan Controller dengan Dependency Injection
     const userService = new UserService(User);
-    const userController = new UserController(userService);
+    const authService = new AuthService(User);
+    const userController = new UserController(userService, authService);
 
     // 3. Setup Aplikasi Express
     const app = express();
     app.use(morgan("dev"));
     app.use(express.json());
 
-    // BAGIAN YANG HILANG (3): Daftarkan Routes ke Express (Paling Penting)
+    // 4. Daftarkan Routes ke Express
     app.use("/users", createUserRoutes(userController));
 
     app.listen(PORT, () => console.log(`user-service listening on ${PORT}`));

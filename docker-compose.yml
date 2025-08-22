@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   # Message Broker
@@ -28,7 +28,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,25 +38,20 @@ services:
     build:
       context: ./services/user-service/
       dockerfile: Dockerfile
-    environment:  # ✅ BENAR: Di bawah nama service
+    environment: 
       - PORT=3001
     depends_on:
       rabbitmq:
-        condition: service_healthy 
+        condition: service_healthy
       mysql:
-        condition: service_healthy 
+        condition: service_healthy
 
   product-service:
-    build: ./services/product-service
+    build:
+      context: ./services/product-service/
+      dockerfile: Dockerfile
     environment:
       - PORT=3002
-      - RABBITMQ_URL=amqp://rabbitmq
-      - SERVICE_NAME=product-service
-      - DB_HOST=mysql
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=product_db
-    ports: ["3002:3002"]
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -64,16 +59,23 @@ services:
         condition: service_healthy
 
   order-service:
-    build: ./services/order-service
+    build:
+      context: ./services/order-service/
+      dockerfile: Dockerfile
     environment:
       - PORT=3003
-      - RABBITMQ_URL=amqp://rabbitmq
-      - SERVICE_NAME=order-service
-      - DB_HOST=mysql
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=order_db
-    ports: ["3003:3003"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+
+  category-service:
+    build:
+      context: ./services/category-service/
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3004
     depends_on:
       rabbitmq:
         condition: service_healthy
